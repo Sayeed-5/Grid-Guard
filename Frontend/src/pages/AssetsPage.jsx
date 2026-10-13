@@ -82,11 +82,11 @@ export default function AssetsPage() {
     }, 1200);
   };
 
-  const getRiskColor = (score) => {
-    if (score >= 80) return '#ef4444'; // Red
-    if (score >= 60) return '#f59e0b'; // Amber
-    if (score >= 40) return '#eab308'; // Yellow
-    return '#10b981'; // Green
+  const getRiskColorClass = (score) => {
+    if (score >= 80) return 'text-error';
+    if (score >= 60) return 'text-primary';
+    if (score >= 40) return 'text-on-surface-variant';
+    return 'text-secondary';
   };
 
   return (
@@ -136,11 +136,11 @@ export default function AssetsPage() {
                         ? risk === 'CRITICAL'
                           ? 'bg-error text-on-error font-bold shadow-xs'
                           : risk === 'HIGH'
-                          ? 'bg-amber-600 text-white font-bold shadow-xs'
+                          ? 'bg-primary text-on-primary font-bold shadow-xs'
                           : risk === 'MEDIUM'
-                          ? 'bg-yellow-600 text-white font-bold shadow-xs'
+                          ? 'bg-surface-container-highest text-on-surface font-bold shadow-xs border border-outline-variant/60'
                           : risk === 'LOW'
-                          ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                          ? 'bg-secondary text-on-secondary font-bold shadow-xs'
                           : 'bg-primary text-on-primary font-bold shadow-xs'
                         : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
                     }`}
@@ -189,153 +189,350 @@ export default function AssetsPage() {
       </section>
 
       {/* =========================================================================
-          2. ASSET DIRECTORY (7 PRIORITY NODES) LIST / TABLE
-             MATCHING EXACT REFERENCE IMAGE
+          2. SIDE-BY-SIDE ROW:
+             LEFT (50%): ASSET DIRECTORY (7 PRIORITY NODES)
+             RIGHT (50%): REAL-TIME SENSOR TELEMETRY MATRIX
          ========================================================================= */}
-      <section className="bg-[#121622] border border-[#232b3e] shadow-md rounded-xs overflow-hidden">
-        {/* Directory Header Bar */}
-        <div className="flex items-center justify-between px-space-lg py-3 bg-[#181f2f] border-b border-[#232b3e]">
-          <div className="flex items-center gap-2.5 text-[#e2e8f0]">
-            <span className="material-symbols-outlined text-primary text-[1.25rem]">
-              format_list_bulleted
-            </span>
-            <h2 className="font-headline-sm text-headline-sm font-bold uppercase tracking-wider text-white">
-              ASSET DIRECTORY ({filteredNodes.length} PRIORITY NODES)
-            </h2>
-          </div>
-          <div className="flex items-center gap-2 font-label-code text-label-code text-[#94a3b8]">
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-            <span>Updated 14:02 UTC</span>
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-stretch">
+        {/* LEFT COLUMN: ASSET DIRECTORY (6 cols ~ 50%) */}
+        <div className="lg:col-span-6 flex flex-col">
+          <div className="bg-surface-container-lowest border border-surface-variant shadow-sm rounded-xs overflow-hidden flex flex-col h-full">
+            {/* Directory Header Bar */}
+            <div className="flex items-center justify-between px-space-md py-3 bg-surface-container border-b border-surface-variant shrink-0">
+              <div className="flex items-center gap-2 text-on-surface">
+                <span className="material-symbols-outlined text-primary text-[1.25rem]">
+                  format_list_bulleted
+                </span>
+                <h2 className="font-headline-sm text-body-lg font-bold uppercase tracking-wider text-on-surface">
+                  ASSET DIRECTORY ({filteredNodes.length} NODES)
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 font-label-code text-[0.6875rem] text-tertiary">
+                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                <span>Updated 14:02 UTC</span>
+              </div>
+            </div>
+
+            {/* Directory Card Nodes List */}
+            <div className="divide-y divide-surface-variant overflow-y-auto max-h-[570px] flex-1">
+              {filteredNodes.length === 0 ? (
+                <div className="p-space-xl text-center font-label-code text-label-code text-tertiary">
+                  NO ASSETS FOUND MATCHING SEARCH OR FILTER CRITERIA.
+                </div>
+              ) : (
+                filteredNodes.map((node) => {
+                  const isSelected =
+                    selectedAsset.id === node.id ||
+                    selectedAsset.displayCode === node.displayCode ||
+                    selectedAsset.name === node.name ||
+                    (node.id === 'TX-04' && selectedAsset.id === 'TX-Oak-04');
+
+                  const isCritical = node.riskClassification === 'CRITICAL';
+                  const isHigh = node.riskClassification === 'HIGH';
+                  const isMedium = node.riskClassification === 'MEDIUM';
+                  const isLow = node.riskClassification === 'LOW';
+
+                  return (
+                    <div
+                      key={node.id}
+                      onClick={() => setSelectedAssetId(node.id)}
+                      className={`p-space-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-space-md ${
+                        isSelected
+                          ? 'bg-primary/5 border-l-4 border-l-primary'
+                          : 'bg-surface-container-lowest hover:bg-surface-container-low border-l-4 border-l-transparent'
+                      }`}
+                    >
+                      {/* Left Column: Asset Identifier, Status Badges & Details */}
+                      <div className="flex items-start gap-space-md">
+                        <div className="space-y-1">
+                          {/* Line 1: Code Name + Badges */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`font-headline-md text-headline-md font-bold tracking-tight ${
+                                isSelected ? 'text-primary' : 'text-on-surface'
+                              }`}
+                            >
+                              {node.displayCode || node.name}
+                            </span>
+
+                            {/* Critical Badge */}
+                            {isCritical && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-error text-on-error shadow-xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                CRITICAL
+                              </span>
+                            )}
+
+                            {/* High Badge */}
+                            {isHigh && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-primary-fixed text-on-primary-fixed-variant border border-primary/20">
+                                HIGH
+                              </span>
+                            )}
+
+                            {/* Stale RTU Badge (for TX-09) */}
+                            {(node.isStale || node.staleBadge) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant border border-outline-variant/60">
+                                <span className="material-symbols-outlined text-[0.875rem]">wifi_off</span>
+                                {node.staleBadge || 'Stale RTU'}
+                              </span>
+                            )}
+
+                            {/* Medium Badge */}
+                            {isMedium && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-surface-container-highest text-on-surface border border-outline-variant/60">
+                                MEDIUM
+                              </span>
+                            )}
+
+                            {/* Low Badge */}
+                            {isLow && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-secondary-fixed text-on-secondary-fixed-variant border border-secondary/20">
+                                LOW
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Line 2: Equipment Class / Description */}
+                          <div className="font-body-md text-body-md text-on-surface-variant font-medium">
+                            {node.classType}
+                          </div>
+
+                          {/* Line 3: Feeder & Substation Note */}
+                          <div className="flex items-center gap-1.5 font-label-code text-[0.75rem] text-tertiary flex-wrap">
+                            <span className="material-symbols-outlined text-[0.9375rem] text-tertiary">
+                              hub
+                            </span>
+                            <span>{node.substation.split('•')[0].trim()}</span>
+                            <span>•</span>
+                            {node.staleNote ? (
+                              <span className="text-error font-bold">{node.staleNote}</span>
+                            ) : node.statusNote ? (
+                              <span
+                                className={
+                                  isCritical ? 'text-error font-semibold' : 'text-on-surface-variant font-medium'
+                                }
+                              >
+                                {node.statusNote}
+                              </span>
+                            ) : (
+                              <span>{node.substation.split('•')[1]?.trim() || 'Substation Node'}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Risk Index Box */}
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0">
+                        <div
+                          className={`px-4 py-2 border rounded-xs text-center min-w-[95px] shadow-xs transition-colors ${
+                            isSelected
+                              ? 'bg-surface-container border-primary/40'
+                              : 'bg-surface-container-low border-surface-variant'
+                          }`}
+                        >
+                          <div
+                            className={`font-headline-lg text-[1.75rem] leading-none font-bold tracking-tight ${getRiskColorClass(
+                              node.riskScore
+                            )}`}
+                          >
+                            {node.riskScore}
+                          </div>
+                          <div className="font-label-meta text-[0.625rem] text-tertiary uppercase tracking-wider mt-1">
+                            RISK INDEX
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Directory Card Nodes List */}
-        <div className="divide-y divide-[#1e2638]">
-          {filteredNodes.length === 0 ? (
-            <div className="p-space-xl text-center font-label-code text-label-code text-[#94a3b8]">
-              NO ASSETS FOUND MATCHING SEARCH OR FILTER CRITERIA.
-            </div>
-          ) : (
-            filteredNodes.map((node) => {
-              const isSelected =
-                selectedAsset.id === node.id ||
-                selectedAsset.displayCode === node.displayCode ||
-                selectedAsset.name === node.name ||
-                (node.id === 'TX-04' && selectedAsset.id === 'TX-Oak-04');
+        {/* RIGHT COLUMN: REAL-TIME SENSOR TELEMETRY MATRIX (6 cols ~ 50%) */}
+        <div className="lg:col-span-6 flex flex-col">
+          <div className="bg-surface-container-lowest p-space-lg shadow-sm border border-surface-variant rounded-xs flex flex-col justify-between h-full">
+            <div>
+              {/* Telemetry Header */}
+              <div className="flex items-center justify-between pb-space-sm mb-space-md border-b border-surface-variant">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[1.25rem] text-primary">sensors</span>
+                  <h2 className="font-headline-sm text-headline-sm text-on-surface uppercase">
+                    Real-Time Sensor Telemetry Matrix
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-label-code text-[0.6875rem] font-bold uppercase">
+                  <span>NODE:</span>
+                  <span>{selectedAsset.displayCode || selectedAsset.name}</span>
+                </div>
+              </div>
 
-              const isCritical = node.riskClassification === 'CRITICAL';
-              const isHigh = node.riskClassification === 'HIGH';
-              const isMedium = node.riskClassification === 'MEDIUM';
-              const isLow = node.riskClassification === 'LOW';
-
-              return (
-                <div
-                  key={node.id}
-                  onClick={() => setSelectedAssetId(node.id)}
-                  className={`p-space-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-space-md ${
-                    isSelected
-                      ? 'bg-[#1b2333] border-l-4 border-l-[#f59e0b]'
-                      : 'bg-[#131722] hover:bg-[#181f2d] border-l-4 border-l-transparent'
-                  }`}
-                >
-                  {/* Left Column: Asset Identifier, Status Badges & Details */}
-                  <div className="flex items-start gap-space-md">
-                    <div className="space-y-1">
-                      {/* Line 1: Code Name + Badges */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`font-headline-md text-headline-md font-bold tracking-tight ${
-                            isSelected ? 'text-[#f59e0b]' : 'text-white'
-                          }`}
-                        >
-                          {node.displayCode || node.name}
-                        </span>
-
-                        {/* Critical Badge */}
-                        {isCritical && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-[#541517] text-[#ff8e8e] border border-[#7f1d1d]/60">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]"></span>
-                            CRITICAL
-                          </span>
-                        )}
-
-                        {/* High Badge */}
-                        {isHigh && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-[#52330a] text-[#fbbf24] border border-[#b45309]/50">
-                            HIGH
-                          </span>
-                        )}
-
-                        {/* Stale RTU Badge (for TX-09) */}
-                        {(node.isStale || node.staleBadge) && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-[#262f40] text-[#94a3b8] border border-[#3e4c66]/60">
-                            <span className="material-symbols-outlined text-[0.875rem]">wifi_off</span>
-                            {node.staleBadge || 'Stale RTU'}
-                          </span>
-                        )}
-
-                        {/* Medium Badge */}
-                        {isMedium && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-[#42380d] text-[#fef08a] border border-[#ca8a04]/50">
-                            MEDIUM
-                          </span>
-                        )}
-
-                        {/* Low Badge */}
-                        {isLow && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[0.6875rem] font-label-code font-bold uppercase tracking-wider bg-[#0a3826] text-[#6ee7b7] border border-[#059669]/50">
-                            LOW
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Line 2: Equipment Class / Description */}
-                      <div className="font-body-md text-body-md text-[#93c5fd] font-medium">
-                        {node.classType}
-                      </div>
-
-                      {/* Line 3: Feeder & Substation Note */}
-                      <div className="flex items-center gap-1.5 font-label-code text-[0.75rem] text-[#94a3b8] flex-wrap">
-                        <span className="material-symbols-outlined text-[0.9375rem] text-[#64748b]">
-                          hub
-                        </span>
-                        <span>{node.substation.split('•')[0].trim()}</span>
-                        <span>•</span>
-                        {node.staleNote ? (
-                          <span className="text-[#ef4444] font-bold">{node.staleNote}</span>
-                        ) : node.statusNote ? (
-                          <span
-                            className={
-                              isCritical ? 'text-[#fca5a5] font-semibold' : 'text-[#cbd5e1]'
-                            }
-                          >
-                            {node.statusNote}
-                          </span>
-                        ) : (
-                          <span>{node.substation.split('•')[1]?.trim() || 'Substation Node'}</span>
-                        )}
-                      </div>
-                    </div>
+              {/* 2x2 Telemetry Matrix Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                {/* Card 1: Top-Oil Temp */}
+                <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-meta text-label-meta text-tertiary uppercase">Top-Oil Temp</span>
+                    <span
+                      className={`px-1.5 py-0.5 font-label-code text-[0.625rem] font-bold ${
+                        (selectedAsset.temperatureC || 94.2) >= 85
+                          ? 'bg-error text-on-error'
+                          : 'bg-secondary text-on-secondary'
+                      }`}
+                    >
+                      {(selectedAsset.temperatureC || 94.2) >= 85 ? 'ALARM' : 'NORMAL'}
+                    </span>
                   </div>
-
-                  {/* Right Column: Risk Index Box matching reference image */}
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0">
-                    <div className="px-4 py-2 bg-[#1b2333] border border-[#2b3548] rounded-xs text-center min-w-[95px] shadow-xs">
+                  <div className="my-space-sm flex items-baseline justify-between">
+                    <span
+                      className={`font-display text-[2.25rem] leading-none font-bold ${
+                        (selectedAsset.temperatureC || 94.2) >= 85 ? 'text-error' : 'text-on-surface'
+                      }`}
+                    >
+                      {selectedAsset.temperatureC || 94.2}
+                    </span>
+                    <span
+                      className={`font-headline-sm text-headline-sm ${
+                        (selectedAsset.temperatureC || 94.2) >= 85 ? 'text-error' : 'text-tertiary'
+                      }`}
+                    >
+                      °C
+                    </span>
+                  </div>
+                  <div>
+                    <div className="w-full bg-surface-container h-1.5 relative">
                       <div
-                        className="font-headline-lg text-[1.75rem] leading-none font-bold tracking-tight"
-                        style={{ color: getRiskColor(node.riskScore) }}
-                      >
-                        {node.riskScore}
-                      </div>
-                      <div className="font-label-meta text-[0.625rem] text-[#94a3b8] uppercase tracking-wider mt-1">
-                        RISK INDEX
-                      </div>
+                        className={`h-1.5 ${
+                          (selectedAsset.temperatureC || 94.2) >= 85 ? 'bg-error' : 'bg-secondary'
+                        }`}
+                        style={{
+                          width: `${Math.min(100, ((selectedAsset.temperatureC || 94.2) / 105) * 100)}%`
+                        }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
+                      <span>WARN: 85°C</span>
+                      <span className="text-error font-bold">TRIP: 105°C</span>
                     </div>
                   </div>
                 </div>
-              );
-            })
-          )}
+
+                {/* Card 2: Load Demand */}
+                <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-meta text-label-meta text-tertiary uppercase">Load Demand</span>
+                    <span className="px-1.5 py-0.5 bg-primary text-on-primary font-label-code text-[0.625rem] font-bold">
+                      {selectedAsset.loadPercentage || 98.4}%
+                    </span>
+                  </div>
+                  <div className="my-space-sm flex items-baseline justify-between">
+                    <span className="font-display text-[2.25rem] leading-none text-primary font-bold">
+                      {selectedAsset.activeLoadMva || 44.2}
+                    </span>
+                    <span className="font-headline-sm text-headline-sm text-primary">MVA</span>
+                  </div>
+                  <div>
+                    <div className="w-full bg-surface-container h-1.5 relative">
+                      <div
+                        className="bg-primary h-1.5"
+                        style={{ width: `${Math.min(100, selectedAsset.loadPercentage || 98.4)}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
+                      <span>RATED: {selectedAsset.ratedMva || 45.0} MVA</span>
+                      <span className="text-primary font-bold">
+                        MARGIN: {((selectedAsset.ratedMva || 45.0) - (selectedAsset.activeLoadMva || 44.2)).toFixed(1)} MVA
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3: Dissolved Hydrogen H2 */}
+                <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-meta text-label-meta text-tertiary uppercase">Dissolved H₂</span>
+                    <span className="px-1.5 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-label-code text-[0.625rem] font-bold">
+                      +45 ppm/6h
+                    </span>
+                  </div>
+                  <div className="my-space-sm flex items-baseline justify-between">
+                    <span className="font-display text-[2.25rem] leading-none text-on-surface font-bold">
+                      {selectedAsset.h2Ppm || 185}
+                    </span>
+                    <span className="font-headline-sm text-headline-sm text-tertiary">ppm</span>
+                  </div>
+                  <div>
+                    <div className="w-full bg-surface-container h-1.5 relative">
+                      <div className="bg-primary h-1.5" style={{ width: '74%' }}></div>
+                    </div>
+                    <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
+                      <span>BASELINE: 40 ppm</span>
+                      <span className="text-primary font-bold">IEEE C57.104 T2</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 4: Tank Vibration */}
+                <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-meta text-label-meta text-tertiary uppercase">Tank Vibration</span>
+                    <span
+                      className={`px-1.5 py-0.5 font-label-code text-[0.625rem] font-bold ${
+                        (selectedAsset.vibrationMmS || 4.8) >= 3.0
+                          ? 'bg-error text-on-error'
+                          : 'bg-secondary text-on-secondary'
+                      }`}
+                    >
+                      {(selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'ANOMALY' : 'NORMAL'}
+                    </span>
+                  </div>
+                  <div className="my-space-sm flex items-baseline justify-between">
+                    <span
+                      className={`font-display text-[2.25rem] leading-none font-bold ${
+                        (selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'text-error' : 'text-on-surface'
+                      }`}
+                    >
+                      {selectedAsset.vibrationMmS || 4.8}
+                    </span>
+                    <span className="font-headline-sm text-headline-sm text-tertiary">mm/s</span>
+                  </div>
+                  <div>
+                    <div className="w-full bg-surface-container h-1.5 relative">
+                      <div
+                        className={`h-1.5 ${
+                          (selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'bg-error' : 'bg-secondary'
+                        }`}
+                        style={{ width: '82%' }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
+                      <span>NORMAL: &lt;2.5</span>
+                      <span className="text-error font-bold">COIL RESONANCE</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Live Health Strip */}
+            <div className="mt-space-md pt-space-sm bg-surface-container-low p-space-sm border border-surface-variant/40 font-label-code text-[0.6875rem] flex flex-wrap items-center justify-between gap-space-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-secondary"></span>
+                <span className="text-tertiary">SCADA DNP3:</span>
+                <span className="text-on-surface font-bold">LIVE (0.4s)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-tertiary">RTU HEALTH:</span>
+                <span className="text-secondary font-bold">12/12 CHANNELS</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-tertiary">CONTINGENCY:</span>
+                <span className="text-primary font-bold">N-1 ARMED</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -560,160 +757,6 @@ export default function AssetsPage() {
             <div className="flex items-center justify-between font-label-meta text-label-meta text-tertiary uppercase mt-1">
               <span>CONTACT: DISPATCH REGION 4</span>
               <span className="text-on-surface font-bold">CH-9 DIRECT</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          4. REAL-TIME SENSOR TELEMETRY MATRIX
-         ========================================================================= */}
-      <section className="bg-surface-container-lowest p-space-lg shadow-sm border border-surface-variant">
-        <div className="flex items-center justify-between pb-space-xs mb-space-md border-b border-surface-variant">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[1.25rem] text-primary">sensors</span>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface uppercase">
-              Real-Time Sensor Telemetry Matrix
-            </h2>
-          </div>
-          <span className="font-label-code text-label-code text-tertiary">
-            4 / 4 CHANNELS MONITORED • SCADA POLLING: 0.4s
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-sm">
-          {/* Card 1: Top-Oil Temp */}
-          <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-label-meta text-label-meta text-tertiary uppercase">Top-Oil Temp</span>
-              <span
-                className={`px-1.5 py-0.5 font-label-code text-[0.625rem] font-bold ${
-                  (selectedAsset.temperatureC || 94.2) >= 85
-                    ? 'bg-error text-on-error'
-                    : 'bg-secondary text-on-secondary'
-                }`}
-              >
-                {(selectedAsset.temperatureC || 94.2) >= 85 ? 'ALARM' : 'NORMAL'}
-              </span>
-            </div>
-            <div className="mt-space-xs flex items-baseline justify-between">
-              <span
-                className={`font-display text-[2.25rem] leading-none font-bold ${
-                  (selectedAsset.temperatureC || 94.2) >= 85 ? 'text-error' : 'text-on-surface'
-                }`}
-              >
-                {selectedAsset.temperatureC || 94.2}
-              </span>
-              <span
-                className={`font-headline-sm text-headline-sm ${
-                  (selectedAsset.temperatureC || 94.2) >= 85 ? 'text-error' : 'text-tertiary'
-                }`}
-              >
-                °C
-              </span>
-            </div>
-            <div className="w-full bg-surface-container h-1.5 mt-space-sm relative">
-              <div
-                className={`h-1.5 ${
-                  (selectedAsset.temperatureC || 94.2) >= 85 ? 'bg-error' : 'bg-secondary'
-                }`}
-                style={{
-                  width: `${Math.min(100, ((selectedAsset.temperatureC || 94.2) / 105) * 100)}%`
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
-              <span>WARN: 85°C</span>
-              <span className="text-error font-bold">TRIP: 105°C</span>
-            </div>
-          </div>
-
-          {/* Card 2: Load Demand */}
-          <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-label-meta text-label-meta text-tertiary uppercase">Load Demand</span>
-              <span className="px-1.5 py-0.5 bg-primary text-on-primary font-label-code text-[0.625rem] font-bold">
-                {selectedAsset.loadPercentage || 98.4}%
-              </span>
-            </div>
-            <div className="mt-space-xs flex items-baseline justify-between">
-              <span className="font-display text-[2.25rem] leading-none text-primary font-bold">
-                {selectedAsset.activeLoadMva || 44.2}
-              </span>
-              <span className="font-headline-sm text-headline-sm text-primary">MVA</span>
-            </div>
-            <div className="w-full bg-surface-container h-1.5 mt-space-sm relative">
-              <div
-                className="bg-primary h-1.5"
-                style={{ width: `${Math.min(100, selectedAsset.loadPercentage || 98.4)}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
-              <span>RATED: {selectedAsset.ratedMva || 45.0} MVA</span>
-              <span className="text-primary font-bold">
-                MARGIN: {((selectedAsset.ratedMva || 45.0) - (selectedAsset.activeLoadMva || 44.2)).toFixed(1)} MVA
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: Dissolved Hydrogen H2 */}
-          <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-label-meta text-label-meta text-tertiary uppercase">Dissolved H₂</span>
-              <span className="px-1.5 py-0.5 bg-primary-fixed text-on-primary-fixed font-label-code text-[0.625rem] font-bold">
-                +45 ppm/6h
-              </span>
-            </div>
-            <div className="mt-space-xs flex items-baseline justify-between">
-              <span className="font-display text-[2.25rem] leading-none text-on-surface font-bold">
-                {selectedAsset.h2Ppm || 185}
-              </span>
-              <span className="font-headline-sm text-headline-sm text-tertiary">ppm</span>
-            </div>
-            <div className="w-full bg-surface-container h-1.5 mt-space-sm relative">
-              <div className="bg-primary h-1.5" style={{ width: '74%' }}></div>
-            </div>
-            <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
-              <span>BASELINE: 40 ppm</span>
-              <span className="text-primary font-bold">IEEE C57.104 T2</span>
-            </div>
-          </div>
-
-          {/* Card 4: Tank Vibration */}
-          <div className="bg-surface-container-low p-space-md border border-surface-variant/40 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-label-meta text-label-meta text-tertiary uppercase">Tank Vibration</span>
-              <span
-                className={`px-1.5 py-0.5 font-label-code text-[0.625rem] font-bold ${
-                  (selectedAsset.vibrationMmS || 4.8) >= 3.0
-                    ? 'bg-error text-on-error'
-                    : 'bg-secondary text-on-secondary'
-                }`}
-              >
-                {(selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'ANOMALY' : 'NORMAL'}
-              </span>
-            </div>
-            <div className="mt-space-xs flex items-baseline justify-between">
-              <span
-                className={`font-display text-[2.25rem] leading-none font-bold ${
-                  (selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'text-error' : 'text-on-surface'
-                }`}
-              >
-                {selectedAsset.vibrationMmS || 4.8}
-              </span>
-              <span className="font-headline-sm text-headline-sm text-tertiary">mm/s</span>
-            </div>
-            <div className="w-full bg-surface-container h-1.5 mt-space-sm relative">
-              <div
-                className={`h-1.5 ${
-                  (selectedAsset.vibrationMmS || 4.8) >= 3.0 ? 'bg-error' : 'bg-secondary'
-                }`}
-                style={{ width: '82%' }}
-              ></div>
-            </div>
-            <div className="flex justify-between font-label-code text-[0.625rem] text-tertiary mt-1">
-              <span>NORMAL: &lt;2.5</span>
-              <span className="text-error font-bold">COIL RESONANCE</span>
             </div>
           </div>
         </div>
