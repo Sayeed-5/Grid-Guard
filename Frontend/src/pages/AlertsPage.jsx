@@ -326,27 +326,21 @@ export default function AlertsPage() {
                       {alert.assetId === 'TX-Oak-04' ? 'TX-04' : alert.assetId}
                     </td>
 
-                    <td className="py-2.5 px-3 align-middle text-on-surface-variant whitespace-nowrap">
-                      <span className="font-semibold text-on-surface">{alert.classNode.split('•')[0]}</span>
-                      <span className="block font-label-meta text-label-meta text-tertiary">
-                        {alert.classNode.split('•').slice(1).join('•')}
-                      </span>
+                    <td className="py-2.5 px-3 align-middle font-semibold text-on-surface whitespace-nowrap">
+                      {alert.classNode.split('•')[0].trim()}
                     </td>
 
                     <td className="py-2.5 px-3 align-middle font-body-sm text-body-sm text-on-surface">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             isCrit ? 'bg-error' : isHigh ? 'bg-primary' : isDegrad ? 'bg-tertiary' : 'bg-secondary'
                           }`}
                         ></span>
-                        <span className={isCrit ? 'font-semibold text-error' : ''}>
+                        <span className={isCrit ? 'font-semibold text-error' : 'font-medium'}>
                           {alert.primaryTrigger}
                         </span>
                       </div>
-                      <span className="block text-on-surface-variant font-label-meta text-label-meta">
-                        {alert.secondaryTrigger}
-                      </span>
                     </td>
 
                     <td
